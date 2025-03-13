@@ -1406,6 +1406,8 @@ export class ConnectSecure implements INodeType {
 					headers: {
 						'Content-Type': 'application/json',
 						Accept: 'application/json',
+						'X-Tenant': credentials.tenant as string,
+						'X-USER-ID': credentials.userId as string,
 					},
 					json: true,
 				};
@@ -1520,16 +1522,10 @@ export class ConnectSecure implements INodeType {
 					options.body = {};
 				}
 
-				// Add authorization if not the authorize endpoint
-				if (endpoint !== '/w/authorize') {
-					options.headers!.Authorization = `Bearer ${credentials.accessToken as string}`;
-				} else {
-					// For the authorize endpoint, use Client-Auth-Token
-					const clientAuthToken = Buffer.from(
-						`${credentials.tenant as string}+${credentials.clientId as string}:${credentials.clientSecret as string}`,
-					).toString('base64');
-					options.headers!['Client-Auth-Token'] = clientAuthToken;
-				}
+				// Get OAuth2 token and add it to headers
+				const oAuth2Options = await this.getCredentials('oAuth2Api');
+				const token = await this.getNodeParameter('oAuth2Api', 0) as string;
+				options.headers!.Authorization = `Bearer ${token}`;
 
 				// Make the API request
 				const responseData = await this.helpers.request(options);

@@ -1,4 +1,5 @@
 import {
+	IAuthenticateGeneric,
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
@@ -7,7 +8,14 @@ export class ConnectSecureApi implements ICredentialType {
 	name = 'connectSecureApi';
 	displayName = 'Connect Secure API';
 	documentationUrl = 'https://connect-secure.com/docs';
+	extends = ['oAuth2Api'];
 	properties: INodeProperties[] = [
+		{
+			displayName: 'Grant Type',
+			name: 'grantType',
+			type: 'hidden',
+			default: 'clientCredentials',
+		},
 		{
 			displayName: 'Tenant',
 			name: 'tenant',
@@ -49,15 +57,46 @@ export class ConnectSecureApi implements ICredentialType {
 			description: 'User ID for the X-USER-ID header required by the API',
 		},
 		{
-			displayName: 'Access Token',
-			name: 'accessToken',
+			displayName: 'Authorization URL',
+			name: 'authUrl',
 			type: 'string',
-			typeOptions: {
-				password: true,
-			},
-			default: '',
+			default: '={{$self["baseUrl"]}}/w/authorize',
 			required: true,
-			description: 'Access token for API authentication (can be obtained using the Authorize operation)',
+		},
+		{
+			displayName: 'Access Token URL',
+			name: 'accessTokenUrl',
+			type: 'string',
+			default: '={{$self["baseUrl"]}}/w/auth/login',
+			required: true,
+		},
+		{
+			displayName: 'Scope',
+			name: 'scope',
+			type: 'hidden',
+			default: '',
+		},
+		{
+			displayName: 'Auth URI Query Parameters',
+			name: 'authQueryParameters',
+			type: 'hidden',
+			default: '',
+		},
+		{
+			displayName: 'Authentication',
+			name: 'authentication',
+			type: 'hidden',
+			default: 'header',
 		},
 	];
+
+	authenticate: IAuthenticateGeneric = {
+		type: 'generic',
+		properties: {
+			headers: {
+				'X-Tenant': '={{$credentials.tenant}}',
+				'X-USER-ID': '={{$credentials.userId}}',
+			},
+		},
+	};
 }
